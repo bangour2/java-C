@@ -1,0 +1,69 @@
+2.16. a. Suppose the run-time of a serial program is given by Tserial =n2, where the units of the run-time are in microseconds. Suppose that a paral- lelization of this program has run-time Tparallel =n2/p+log2(p).
+
+**Write a program that finds the speedups and effciencies of this program for vari- ous values of n and p. 
+Run your program with n=10,20,40,...,320, and p=1,2,4,...,128.  What happens to the speedups and ef?ciencies as p is increased and n is held ?xed? What happens when p is ?xed and n is increased? 
+
+Sp = Ts / Tp = n2 / (n2/p + log2(p)) = 1 / (1/p + log2(p)/ n2) 
+Ep = Sp / p = 1 / ((1/p + log2(p)/ n2) * p) = 1/ (1 + p log2(p)/ n2) 
+
+if n is fixed, the speedup increases if p is increased, but eventually will decrease when it reaches the optimal p. 
+if p is fixed, the speedup will increase if n is increased, but speedup will finally be static, saturated when n is large enough.   
+
+if n is fixed, efficiency will always decrease if p is increased 
+if p is fixed, efficiency will always increase if n is increased
+
+
+    int n, p;
+   for (n = 10; n < 321; n = n * 2)
+   {
+       for (p = 1; p <129; p = p * 2)
+       {
+   double tserial = n * n;
+   double tparallel = (n * n)/(p + log2(p));
+   
+   double speedup = tserial/tparallel;
+   double efficiency = speedup/p;
+   
+    printf (" n%d \t speed  %f\t efficiency %f\t ", n, speedup, efficiency);
+     printf ("\n");
+      printf ("\n");
+   }}
+    printf ("------------------------------------\n");
+     printf ("------------------------------------\n");
+     
+     for (p = 1; p <129; p = p * 2)
+   {      
+       for (n = 10; n < 321; n = n * 2)
+       {
+   double tserial = n * n;
+   double tparallel = (n * n)/(p + log2(p));
+   
+   double speedup = tserial/tparallel;
+   double efficiency = speedup/p;
+   
+    printf (" n%d \t speed  %f\t efficiency %f\t ", n, speedup, efficiency);
+     printf ("\n");
+      printf ("\n");
+
+
+b. Suppose that Tparallel =Tserial/p+Toverhead. Also suppose that we ?x p and increase the problem size. - Show that if Toverhead grows more slowly than Tserial, the parallel ef?ciency will increase as we increase the problem size. - Show that if, on the other hand, Toverhead grows faster than Tserial, the parallel ef?ciency will decrease as we increase the problem size.
+
+Tp = Ts / p + To 
+Sp = Ts / Tp 
+
+Ep = Sp / p = Ts / ((Ts / p + To) * p) = Ts / (Ts + To * p) = 1 / (1 + (To / Ts) * p) 
+If Toverhead grows more slowly than Tserial, To / Ts -> 0,  Ep -> 1 
+If Toverhead grows faster than Tserial, To / Ts -> infinity,  Ep -> 0   
+
+
+2.19. Suppose Tserial =n and Tparallel =n/p+log2(p), where times are in microsec- onds. If we increase p by a factor of k, ?nd a formula for how much we’ll need to increase n in order to maintain constant ef?ciency. How much should we increase n by if we double the number of processes from 8 to 16? Is the parallel program scalable? 
+----------------------------
+sol:
+speedup = tserial/tparallel <=> n/[n/p+log2(p)]
+efficiency = n/ [n + (plog2 p)]
+let a = factor to increase n
+
+n/ [n + (plog2 p)]= na/[pa + (kp)log2(pk)]
+
+solve for x
+

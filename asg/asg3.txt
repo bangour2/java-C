@@ -1,0 +1,60 @@
+4.1 When we discussed matrix-vector multiplication we assumed that both m and n, the number of rows and the number of columns, respectively, were evenly divisible by t,the number of threads. How do the formulas for the assignments change if this is not the case? 
+
+** Possible Answer -------------------------------
+if( m and n are not divisible by t)
+
+int data = m * n ; //determine number of data
+y[i] = 0.0;  // i represent threads 0 to ...t
+
+
+for (int k = 1; k <= data; k++)                             {
+  if ((t * k + 1 )==data)  { //determine k, or column
+if(i < t)
+{
+for (j = 0; j < k; j++) //go this number of column
+ y[i] += A[i][j]*x[j];          } //compute
+}
+
+if(i == t)
+{
+for (j = 0; j < k+1; j++) //go this number of column
+ y[i] += A[i][j]*x[j];    //compute
+}
+                                    }   
+                                                                     }
+
+4.3  Recall that the compiler is unaware that an ordinary C program is multi- threaded, and as a consequence, it may make optimizations that can inter- fere with busy-waiting. (Note that compiler optimizations should not affect mutexes, condition variables, or semaphores.) An alternative to completely turning off compiler optimizations is to identify some shared variables with the C keyword volatile. This tells the compiler that these variables may be updated by mutiple threads and, as a consequence, it shouldn’t apply opti- mizations to statements involving them. As an example, recall our busy-wait solution to the race condition when multiple threads attempt to add a private variable into a shared variable: /* x and flag are shared, y is private */ /* x and flag are initialized to 0 by main thread */ y = Compute(my rank); while (flag != my rank); x = x + y; flag++; It’s impossible to tell by looking at this code that the order of the while statement and the x = x + y statement is important; if this code were single- threaded,the order n of these two statements wouldn’t affect the outcome of the code. But if the compiler determined that it could improve register usage by interchanging the order of these two statements, the resulting code would be erroneous. If, instead of defining
+int flag; int x; we define
+int volatile flag; int volatile x; then the compiler will know that both x and flag can be updated by other threads, so it shouldn’t try reordering the statements. With the gcc compiler, the default behavior is no optimization. You can make certain of this by adding the option -O0 to the command line. Try running the pi calculation program that uses busy-waiting (pth pi busy.c) without optimization.  
+How does the result of the multithreaded calculation compare to the single-threaded calculation?
+
+** Possible Answer -------------------------------------------------------------------
+"The threads will alternate between waiting and executing, and the waiting and the incrementing increase the overall run time by a factor of x. "
+We also notice that one thread computation is extremely larger  and closer to pi than the rest of the threads. And some numbers generated are negative. The final result after summing the values has to be larger than expected value.
+"In fact, if we ran the program several times with two threads and the same value of n, we would see that the result computed by two threads changes from run to run. The answer to our original ques- tion must clearly be, “Yes, it matters if multiple threads try to update a single shared variable.” 
+--------------------------------------------------------------------------------------------
+
+Now try running it with optimiza- tion; if you’re using gcc, replace the -O0 option with -O2. If you found an error, how many threads did you use?
+
+"If we run the Pthreads program with two threads and n is relatively small, we ?nd that the results of the Pthreads program are in agreement with the serial sum program. However, as n gets larger, we start getting some peculiar results."
+
+thread 999, 333
+-------------------------------------------------------------------------------------------------------------------------
+
+Which variables should be made volatile in the p calculation? Change these variables so that they’re volatile and rerun the program with and without optimization. How do the results compare to the single-threaded program? 
+
+sum, flag. 
+
+4.14 Recall that in C a function that takes a two-dimensional array argument must specify the number of columns in the argument list. Thus it is quite common for C programmers to only use one-dimensional arrays, and to write explicit code for converting pairs of subscripts into a single dimension. Modify the Pthreads matrix-vector multiplication so that it uses a one-dimensional array for the matrix and calls a matrix-vector multiplication function.How does this change affect the run-time? 
+
+** Possible Answer -----------------------------
+int i, j;
+  
+ for (i = my_first_row; i < my_last_row; i++) {
+      y[i] = 0.0;
+      for (j = 0; j < n; j++)
+         y[i] += A[i*n+j]*x[j];
+   }
+
+ we see that as  n is relative large the serial sum is consistently faster than the parallel sum
+

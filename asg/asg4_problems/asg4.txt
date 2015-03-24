@@ -1,0 +1,138 @@
+4.2 
+ If we decide to physically divide a data structure among the threads, that is, if we decide to make various members local to individual threads, we need to consider at least three issues: a. How are the members of the data structure used by the individual threads? b. Where and how is the data structure initialized? c. Where and how is the data structure used after its members are computed? We brie?y looked at the ?rst issue in the matrix-vector multiplication function. We saw that the entire vector x was used by all of the threads, so it seemed pretty clear that it should be shared. However, for both the matrix A and the product vector y, just looking at (a) seemed to suggest that A and y should have their components distributed among the threads. Let’s take a closer look at this. 
+What would we have to do in order to divide A and y among the threads? 
+---------------------------------------
+dividing the  iterations  among the threads so that each thread executes its allocated part of the code.
+we achieve task parallelism or/and data parallelism.
+---------------------------------------
+Dividing y wouldn’t be dif?cult–each thread could allocate a block of memory that could be used for storing its assigned components. 
+
+Presumably, we could do the same for A–each thread could allocate a block of memory for storing its assigned rows. 
+
+Modify the matrix-vector multiplication program so that it distributes both of these data structures. 
+-----------------------------------------
+thread_number = row * column ;
+j = 0 ;
+
+for (thread_i = 0; thread_i < thread_number; thread_i ++)
+
+y[thread_i] += A[thread_i] * x[j]; 
+if(j == column -1 ) j =0; //we only get to execute j once
+
+-------------------------------------------
+Can you “schedule” the input and output so that the threads can read in A and print out y?
+----------------------------------------------------
+void InputOutput_matrix(double y[], int A[], thread_number ) {
+
+thread_number = row * column;
+j = 0 ;
+
+for (thread_i= 0; thread_i< thread_number; thread_i++)
+
+y[thread_i] += A[thread_i]* x[j]; 
+if(j == column -1 ) j =0; //we only get to execute j once
+
+scanf("%lf", &y[[thread_i] ]);
+
+}  
+----------------------------------------
+ How does distributing A and y affect the run-time of the matrix-vector multiplication?
+------------------------------------------------
+There is a bit of overhead, but eventually is very fast as the data are equally divided to the threads.
+------------------------------------------------
+(Don’tinclude input or output in your run-time.) 
+
+
+4.3
+ ignore the instructions to use 3 different methods to enforce mutual exclusion. 
+
+** mutex
+-------------------------------------------------------------
+void* Thread_sum(void* rank) {
+   long my_rank = (long) rank;
+   double factor;
+   long  i;
+   long  my_n = n/thread_count;
+   long  my_first_i = my_n*my_rank;
+   long  my_last_i = my_first_i + my_n;
+   float my_sum = 0.0;
+
+   if (my_first_i % 2 == 0)
+      factor = 1.0;
+   else
+      factor = -1.0;
+
+   for (i = my_first_i; i < my_last_i; i++, factor = -factor) {
+      my_sum += factor/(2*i+1);
+   }
+   pthread_mutex_lock(&mutex);
+   sum += my_sum;
+   printf("from thread %d , my_sum %f \n", rank, my_sum);
+
+   pthread_mutex_unlock(&mutex);
+
+   return NULL;
+}  
+-------------------------------------------------------------------
+
+** busy wait
+
+void* Thread_sum(void* rank) {
+   long my_rank = (long) rank;
+   double volatile factor = 0.0; 
+   double volatile my_sum = 0.0;
+   long i;
+   long my_n = n/thread_count;
+   long my_first_i = my_n*my_rank;
+   long my_last_i = my_first_i + my_n;
+
+   if (my_first_i % 2 == 0)
+      factor = 1.0;
+   else
+      factor = -1.0;
+
+   for (i = my_first_i; i < my_last_i; i++, factor = -factor) 
+      my_sum += factor/(2*i+1);  
+   
+   while (flag != my_rank);
+   sum += my_sum;  
+   flag = (flag+1) % thread_count;
+   printf("from thread %d, my_sum %lf", my_rank, my_sum);
+
+   return NULL;
+} 
+-------------------------------------------------------------------
+
+** barrier
+
+void* Thread_sum(void* rank) {
+   long my_rank = (long) rank;
+   double volatile factor = 0.0; 
+   double volatile my_sum = 0.0;
+   long i;
+   long my_n = n/thread_count;
+   long my_first_i = my_n*my_rank;
+   long my_last_i = my_first_i + my_n;
+
+   if (my_first_i % 2 == 0)
+      factor = 1.0;
+   else
+      factor = -1.0;
+   
+// Synchronization point
+ if (pthread_barrier_wait (&barrier) != 0)
+  {
+        printf("Could not wait on barrier\n");
+        exit(-1);
+    }
+
+   for (i = my_first_i; i < my_last_i; i++, factor = -factor) 
+      my_sum += factor/(2*i+1);  
+   
+   sum += my_sum;  
+   printf("from thread %d, my_sum %lf \n", my_rank, my_sum);
+
+   return NULL;
+} 
+
+
